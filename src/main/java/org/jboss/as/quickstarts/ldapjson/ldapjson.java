@@ -81,7 +81,7 @@ public class ldapjson {
             LdapConnection connection = new LdapNetworkConnection( "ldap.corp.redhat.com", 389 );
 
             //EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>=20171106000000Z)", SearchScope.ONELEVEL );
-            EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>="+joindate+")", SearchScope.ONELEVEL, "'*' '+'" );
+            EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>="+joindate+")", SearchScope.ONELEVEL, "* +" );
 
             JsonFactory factory = new JsonFactory();
 
