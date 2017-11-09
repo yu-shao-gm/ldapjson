@@ -68,21 +68,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ldapjson {
 
     @GET
-    @Path("/joindate/{joindate}")
+    @Path("/ldapentry/{ldapServer}/{baseDN}/{filter}")
     @Produces("application/json")
-    public String getldapjson(@PathParam("joindate") String joindate) {
-        System.out.println("Date: " + joindate);
+    public String getldapjson(@PathParam("ldapServer") String ldapServer,
+                              @PathParam("baseDN") String baseDN,
+                              @PathParam("filter") String filter) {
+        System.out.println("Server: " + ldapServer);
+        System.out.println("baseDN: " + baseDN);
+        System.out.println("Filter: " + filter);
         String indented = null;
 
 
         try
         {
             System.out.println("Connecting server ...");
-            LdapConnection connection = new LdapNetworkConnection( "ldap.corp.redhat.com", 389 );
+            LdapConnection connection = new LdapNetworkConnection( ldapServer, 389 );
 
             //EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>=20171106000000Z)", SearchScope.ONELEVEL );
-            EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", 
-                                                    "(rhathiredate>="+joindate+")", 
+            EntryCursor cursor = connection.search( baseDN,
+                                                    filter, 
                                                     SearchScope.ONELEVEL, 
                                                     "*","+" );
 
@@ -94,6 +98,8 @@ public class ldapjson {
             int cursorSize = 0;
 
             generator.writeStartObject();
+
+
             generator.writeArrayFieldStart("New Employee List");
 
             for ( Entry entry : cursor )
@@ -177,6 +183,12 @@ public class ldapjson {
             generator.writeEndArray();
             generator.writeFieldName("Total New");
             generator.writeNumber(cursorSize);
+            generator.writeFieldName("LDAP Server");
+            generator.writeString(ldapServer);
+            generator.writeFieldName("Base DN");
+            generator.writeString(baseDN);
+            generator.writeFieldName("Filter");
+            generator.writeString(filter);
             generator.writeEndObject();
   
             generator.close();
