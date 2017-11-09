@@ -23,22 +23,28 @@
 <body>
 Search LDAP, result in JSON format
 <br><br>
-Usage: /list/joindate/YYYYMMDD000000Z/ 
+Usage: /list/ldapentry/{ldapServer}/{baseDN}/{filter}
 <br><br>
-To list all the employees joined after MM DD, YYYY (e.g. 20171106000000Z)
+Refer standard ldapsearch command usage. An example of the search:
+<pre>
+~/list/ldapentry/ldap.corp.redhat.com/ou=users,dc=redhat,dc=com/(rhathiredate>=20171106000000Z)
+</pre>
 <br><br>
 Result: 
 <pre>
 { "New Employee List" : [ 
   {
     "rhathiredate" : "20171106080000Z", 
-     "rhatweblogin" : "gwormmee@redhat.com", 
+     "rhatweblogin" : "mei@mycorp.com", 
      "rhatgeo" : "NA",
      ... ...
 }, {
 ... ...
 }],
-"Total New" : 26
+  "Total New" : 41,
+  "LDAP Server" : "ldap.mycorp.com",
+  "Base DN" : "ou=users,dc=mycorp,dc=com",
+  "Filter" : "(rhathiredate>=20171106000000Z)"
 }
 </pre>
 <br><br>
