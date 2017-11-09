@@ -71,17 +71,17 @@ public class ldapjson {
     @Path("/joindate/{joindate}")
     @Produces("application/json")
     public String getldapjson(@PathParam("joindate") String joindate) {
-        System.out.println("1Date: " + joindate);
+        System.out.println("Date: " + joindate);
         String indented = null;
 
 
         try
         {
             System.out.println("Connecting server ...");
-            LdapConnection connection = new LdapNetworkConnection( "", 389 );
+            LdapConnection connection = new LdapNetworkConnection( "ldap.corp.redhat.com", 389 );
 
             //EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>=20171106000000Z)", SearchScope.ONELEVEL );
-            EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>="+joindate+")", SearchScope.ONELEVEL );
+            EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>="+joindate+")", SearchScope.ONELEVEL, "'*' '+'" );
 
             JsonFactory factory = new JsonFactory();
 
@@ -104,13 +104,13 @@ public class ldapjson {
 
                        switch (thisAttribute.getId().toLowerCase()) {
 
-                           case "ute":
+                           case "usercertificate":
                                /* Ignore the binary value */
                                break;
-                           case "jo":
+                           case "jpegphoto":
                                /* Ignore the binary jpeg value */
                                break;
-                           case "mer":
+                           case "manager":
                                generator.writeFieldName(thisAttribute.getId());
                                String mgrDN = thisAttribute.getString();
                                ObjectMapper mgrMapper = new ObjectMapper();
@@ -124,7 +124,7 @@ public class ldapjson {
                                String mgrJsonString = mgrMapper.writeValueAsString(mgrHolder);
                                generator.writeRawValue(mgrJsonString);
                                break;
-                           case "mrof":
+                           case "memberof":
                                generator.writeArrayFieldStart(thisAttribute.getId());
                                for ( Value<?> value : thisAttribute ) {
                                    String searchBase = value.getString();
@@ -141,7 +141,7 @@ public class ldapjson {
                                }
                                generator.writeEndArray();
                                break;
-                           case "rin":
+                           case "rhatweblogin":
                                generator.writeArrayFieldStart(thisAttribute.getId());
                                for ( Value<?> value : thisAttribute ) {
                                    generator.writeString(value.getString());
