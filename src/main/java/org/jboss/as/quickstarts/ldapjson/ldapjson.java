@@ -104,7 +104,7 @@ public class ldapjson {
 
             System.out.println("Certs retrieved: " + certs.length + ", building KeyStore...");
 
-	    // Create a KeyStore containing our trusted CAs
+	 
     	    String keyStoreType = KeyStore.getDefaultType();
 	    KeyStore keyStore = KeyStore.getInstance(keyStoreType);
 	    keyStore.load(null, null);
