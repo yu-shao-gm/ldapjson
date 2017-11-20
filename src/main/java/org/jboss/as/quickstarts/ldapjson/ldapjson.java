@@ -31,8 +31,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
+import javax.net.SocketFactory;
+
+import javax.net.ssl.*;
+import java.security.cert.*;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyStoreException;
+import java.security.KeyManagementException;
 
 import java.io.PrintStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdapLdifException;
@@ -49,6 +59,7 @@ import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.*;
 import org.apache.directory.api.ldap.model.cursor.*;
 import org.apache.directory.api.ldap.model.exception.*;
+import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.StringWriter;
@@ -79,12 +90,89 @@ public class ldapjson {
         String indented = null;
 
 
-        try
-        {
+
+
+        try {
+
+
+
+            SocketFactory socketfactory = SSLSocketFactory.getDefault();
+            SSLSocket socket = (SSLSocket) socketfactory.createSocket(ldapServer, 636);
+            socket.startHandshake();
+
+            Certificate[] certs = socket.getSession().getPeerCertificates();
+
+            System.out.println("Certs retrieved: " + certs.length + ", building KeyStore...");
+
+	    // Create a KeyStore containing our trusted CAs
+    	    String keyStoreType = KeyStore.getDefaultType();
+	    KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+	    keyStore.load(null, null);
+
+            for (Certificate cert : certs) {
+                if(cert instanceof X509Certificate) {
+                    ( (X509Certificate) cert).checkValidity();
+                    System.out.println("Active certificate, DN: " + ((X509Certificate) cert).getSubjectDN().getName() + ".");
+	    	    keyStore.setCertificateEntry(((X509Certificate) cert).getSubjectDN().getName(), ((X509Certificate) cert) );
+                }
+            }
+
+            System.out.println("Finish building KeyStore, size:  " + keyStore.size() + ".");
+
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+	    tmf.init(keyStore);
+            TrustManager[] tm = tmf.getTrustManagers();
+            
             System.out.println("Connecting server ...");
-            LdapConnection connection = new LdapNetworkConnection( ldapServer, 389 );
+           
+            LdapConnectionConfig tlsConfig = new LdapConnectionConfig();
+
+            tlsConfig.setLdapHost( ldapServer );
+            tlsConfig.setLdapPort( 389 );
+            tlsConfig.setUseTls( true );
+            //tlsConfig.setUseSsl( true );
+            System.out.println("tm =  : " + tm);
+            tlsConfig.setTrustManagers( tm );
+            //tlsConfig.setTrustManagers( null );
+      
+            //System.out.println("getcredentials = " + tlsConfig.getCredentials());
+
+            //LdapNetworkConnection connection = new LdapNetworkConnection( tlsConfig );
+
+            LdapNetworkConnection connection = new LdapNetworkConnection( tlsConfig );
+            System.out.println("Connection Secure : \n" + connection.isSecured());
+
+            connection.connect();
+            System.out.println("after connect Connection Secure or not : \n" + connection.isSecured());
+            connection.startTls();
+            System.out.println("Connection Secure : \n" + connection.isSecured());
+
+            /*
+            for (TrustManager eachTm : tm) {
+		if (eachTm instanceof X509TrustManager) {
+                        System.out.println("after starttls******x509 cert ");
+			X509TrustManager tmDelegate = (X509TrustManager) eachTm;
+			//tmDelegate.checkServerTrusted(chain,null);
+			//tmDelegate.checkClientTrusted(chain,null);
+                        //System.out.println("ca=" + ((X509Certificate) eachTm).getSubjectDN());
+		}
+	     }               
+            */ 
+
+            //connection.bind( "uid=admin,ou=system", "secret" );
+            connection.bind();
+
+            System.out.println("Connection Secure or not : \n" + connection.isSecured());
+
+
+            //connection.startTls();
+            //System.out.println("Connection Secure or not : \n" + connection.isSecured());
+
+            //LdapConnection connection = new LdapNetworkConnection( ldapServer, 389 );
 
             //EntryCursor cursor = connection.search( "ou=users,dc=redhat,dc=com", "(rhathiredate>=20171106000000Z)", SearchScope.ONELEVEL );
+
             EntryCursor cursor = connection.search( baseDN,
                                                     filter, 
                                                     SearchScope.ONELEVEL, 
@@ -201,14 +289,25 @@ public class ldapjson {
 
             System.out.println("Closing connection ...");
             connection.close();
+        } catch(CertificateExpiredException cee) {
+             System.out.println("Certificate is expired");
         } catch (LdapException e) {
             System.out.println("LDAP Exception : " + e.getMessage());
             return ("{ \"Error\": \"" + e.getMessage() + "\" }");
+	} catch (NoSuchAlgorithmException e) {
+		e.printStackTrace();
+	} catch (KeyStoreException e) {
+		e.printStackTrace();
+	//} catch (KeyManagementException e) {
+        //		e.printStackTrace();
+	} catch (CertificateException e) {
+		e.printStackTrace();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
             return ("{ \"Error\": \"" + e.getMessage() + "\" }");
             //e.printStackTrace();
         }
+
 
         return indented;
 
