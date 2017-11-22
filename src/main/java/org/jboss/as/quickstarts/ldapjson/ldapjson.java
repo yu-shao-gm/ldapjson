@@ -304,8 +304,9 @@ public class ldapjson {
 		e.printStackTrace();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+		e.printStackTrace();
             return ("{ \"Error\": \"" + e.getMessage() + "\" }");
-            e.printStackTrace();
+            
         }
 
 
