@@ -92,14 +92,20 @@ public class ldapjson {
 
 
 
+        SSLSocket socket = null;
+
+        try {
+            SocketFactory socketfactory = SSLSocketFactory.getDefault();
+            socket = (SSLSocket) socketfactory.createSocket(ldapServer, 636);
+            socket.setNeedClientAuth(false);
+            socket.startHandshake();
+        } catch (Exception e) {
+            System.out.println("connection error: " + e.getMessage());
+	    e.printStackTrace();
+        }
+
         try {
 
-
-
-            SocketFactory socketfactory = SSLSocketFactory.getDefault();
-            SSLSocket socket = (SSLSocket) socketfactory.createSocket(ldapServer, 636);
-            socket.setNeedClientAuth(false);
-		socket.startHandshake();
             Certificate[] certs = socket.getSession().getPeerCertificates();
 
             System.out.println("Certs retrieved: " + certs.length + ", building KeyStore...");
