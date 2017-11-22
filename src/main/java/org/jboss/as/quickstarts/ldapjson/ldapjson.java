@@ -97,11 +97,8 @@ public class ldapjson {
 
 
             SocketFactory socketfactory = SSLSocketFactory.getDefault();
-		System.out.println("Filter: " + filter);
             SSLSocket socket = (SSLSocket) socketfactory.createSocket(ldapServer, 636);
-		System.out.println("Filter: " + filter);
             socket.startHandshake();
-System.out.println("Filter: " + filter);
             Certificate[] certs = socket.getSession().getPeerCertificates();
 
             System.out.println("Certs retrieved: " + certs.length + ", building KeyStore...");
