@@ -305,7 +305,7 @@ public class ldapjson {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
             return ("{ \"Error\": \"" + e.getMessage() + "\" }");
-            //e.printStackTrace();
+            e.printStackTrace();
         }
 
 
